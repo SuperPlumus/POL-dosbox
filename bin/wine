@@ -1,0 +1,53 @@
+#!/bin/bash
+
+### DOSBOX Wrapper for PlayOnMac
+# Very very very beta
+# Still a problem with long names
+
+echo "Dosbox 0.73"
+echo "Working in $WINEPREFIX"
+winedir="$POL_USER_ROOT/wine/linux-x86/dosbox-0.73/bin/"
+rwinepath()
+{
+	# Stron minimum requirement for winepath
+	"$winedir/winepath" winepath "$@" 2> /dev/null
+}
+
+if [ "$1" = "wineprefixcreate" ]
+then
+	mkdir -p "$WINEPREFIX/drive_c"
+	exit
+fi 
+if [ "$1" = "wineboot" ] || [ "$1" = "cmd" ]
+then
+	mkdir -p "$WINEPREFIX/drive_c"
+	exit
+fi
+current_rep_unix="$(dirname "$1")"
+current_rep_unix="$PWD"
+source "$PLAYONLINUX/lib/sources"
+echo $current_rep_unix
+current_rep_win_first="$(rwinepath -w $current_rep_unix)"
+echo $current_rep_win_first
+realpath="$(rwinepath -w "$1")"
+
+realpath="${realpath/Z:/W:}"
+current_rep_win="${current_rep_win_first/Z:/W:}"
+current_rep_win="${current_rep_win/./}"
+echo $current_rep_win
+letter=${current_rep_win:0:1}
+
+mkdir -p "$POL_USER_ROOT/tmp/dostmp"
+	
+	cd "$POL_USER_ROOT/tmp/dostmp"
+	echo "mount c $WINEPREFIX/drive_c" > autoexec.bat
+	echo "mount W //" >> autoexec.bat
+	echo "$letter:" >> autoexec.bat
+	echo "rem Going to $current_rep_win_first" >> autoexec.bat
+	echo "cd $current_rep_win" >> autoexec.bat
+	echo "$(basename "$1")" >> autoexec.bat
+	
+	
+	#echo "exit" >> autoexec.bat
+	cd ..
+	DOSBox -conf "$winedir/../share/default.conf"
